@@ -4,9 +4,12 @@ package com.example.tulak_000.sunshine;
  * Created by tulak_000 on 2/15/2015.
  */
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
 import android.util.Log;
@@ -19,7 +22,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,8 +35,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * A placeholder fragment containing a Forecast view.
@@ -65,8 +65,7 @@ public class ForecastFragment extends Fragment {
         // as you specify a parent activity in AndroidManifest.xml
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
-            FetchWeatherTask weatherTask = new FetchWeatherTask();
-            weatherTask.execute("94043");
+            updateWeather();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -76,40 +75,59 @@ public class ForecastFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-        String[] forecastArray = {
-                "Today - Sunny - 88 / 63",
-                "Tomorrow - Foggy - 70 / 46",
-                "Weds - Cloudy - 72 / 63",
-                "Thurs - Rainy - 64 / 51",
-                "Fri - Foggy - 70 / 46",
-                "Sat - Sunny - 76 / 68"
-        };
-
-        List<String> weekForecast = new ArrayList<String>(Arrays.asList(forecastArray));
+//
+//        String[] forecastArray = {
+//                "Today - Sunny - 88 / 63",
+//                "Tomorrow - Foggy - 70 / 46",
+//                "Weds - Cloudy - 72 / 63",
+//                "Thurs - Rainy - 64 / 51",
+//                "Fri - Foggy - 70 / 46",
+//                "Sat - Sunny - 76 / 68"
+//        };
+//
+//        List<String> weekForecast = new ArrayList<String>(Arrays.asList(forecastArray));
 
         forecastAdapter =
                 new ArrayAdapter<String>(
                         getActivity(),
                         R.layout.list_item_forecast,
                         R.id.list_item_forecast_textview,
-                        weekForecast
+                        new ArrayList<String>()
                 );
 
-        View rootview = inflater.inflate(R.layout.fragment_main, container, false);
-        
+//        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
         // Get a reference to the ListView, and attach this adapter to it.
-        ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
+        ListView listView = (ListView) rootView.findViewById(R.id.list_item_forecast);
         listView.setAdapter(forecastAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l){
                 String forecast = forecastAdapter.getItem(position);
-                Toast.makeText(getActivity(), forecast, Toast.LENGTH_SHORT).show();
+//                Toast.makeText(getActivity(), forecast, Toast.LENGTH_SHORT).show();
+
+                Intent intent = new Intent(getActivity(), DetailActivity.class)
+                        .putExtra(Intent.EXTRA_TEXT, forecast);
+                startActivity(intent);
             }
         });
 
         return rootView;
+    }
+
+    private void updateWeather() {
+        FetchWeatherTask weatherTask = new FetchWeatherTask();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = prefs.getString(getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+//        Log.v("test", "location: " + location);
+        weatherTask.execute(location);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
     }
 
     public class FetchWeatherTask extends AsyncTask<String, Void, String[]>
@@ -240,9 +258,10 @@ public class ForecastFragment extends Fragment {
                         .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
                         .build();
 
-                URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7");
+//                URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=94043&mode=json&units=metric&cnt=7");
+                URL url = new URL(builtUri.toString());
 
-                Log.v(LOG_TAG, "Built URI " + builtUri.toString());
+//                Log.v(LOG_TAG, "Built URI " + builtUri.toString());
 
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
